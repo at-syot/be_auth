@@ -1,7 +1,6 @@
 package jwt_auth
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -57,30 +56,6 @@ func NewServer() *Server {
 }
 
 // handlers
-type RespStatus string
-
-const (
-	RespOk   RespStatus = "ok"
-	RespFail RespStatus = "fails"
-)
-
-type Resp struct {
-	Status RespStatus `json:"status"`
-	Data   any        `json:"data"`
-}
-
-func newOkResp(data any) Resp {
-	return Resp{Status: RespOk, Data: data}
-}
-func newFailResp() Resp {
-	return Resp{Status: RespFail, Data: nil}
-}
-
-func (r Resp) Bytes() []byte {
-	w := new(bytes.Buffer)
-	json.NewEncoder(w).Encode(r)
-	return w.Bytes()
-}
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("header: %+v\n", r.Header)

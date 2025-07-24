@@ -7,6 +7,7 @@ import (
 
 	"github.com/at-syot/be_auth/internal/database/models"
 	"github.com/at-syot/be_auth/pkg/cipher"
+	"github.com/at-syot/be_auth/pkg/httpx"
 	"github.com/uptrace/bun"
 )
 
@@ -31,8 +32,7 @@ func makeSignupHandler(db *bun.DB) http.HandlerFunc {
 		var reqBody SignUpReqBody
 		if err := decoder.Decode(&reqBody); err != nil {
 			log.Printf("decode req's body err: %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(newFailResp().Bytes())
+			httpx.WriteInternalErrResp(w)
 			return
 		}
 
@@ -43,18 +43,14 @@ func makeSignupHandler(db *bun.DB) http.HandlerFunc {
 		_, err := db.NewInsert().Model(u).Exec(ctx)
 		if err != nil {
 			log.Printf("handler:insert user err - %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(newFailResp().Bytes())
+			httpx.WriteInternalErrResp(w)
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
 		signinResp := SignUpResp{
 			ID:            u.ID,
 			SignUpReqBody: reqBody,
 		}
-
-		// log.Printf("returning %+v\n", reqBody)
-		w.Write(newOkResp(signinResp).Bytes())
+		httpx.WriteOKResp(w, signinResp)
 	}
 }

@@ -1,12 +1,12 @@
 package jwt_auth
 
 import (
-	"bytes"
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/at-syot/be_auth/pkg/httpx"
 )
 
 type SignedUpUser struct {
@@ -30,20 +30,13 @@ func MakeSignUpClient() {
 	}
 
 	// prepare cookie
-	c := &http.Cookie{Name: "uid", Value: "just uid value"}
-	req.AddCookie(c)
+	// c := &http.Cookie{Name: "uid", Value: "just uid value"}
+	// req.AddCookie(c)
 
-	// preparing body
-	req.Header.Add("Content-Type", "application/json")
-	body := SignUpReqBody{
-		Uname:    "aiosdev",
-		Password: "password",
-	}
-	bodyBytes, err := json.Marshal(body)
-	if err != nil {
+	body := SignUpReqBody{Uname: "aiosdev", Password: "password"}
+	if err := httpx.ReqWithJSON(req, body); err != nil {
 		log.Fatalf("marshal body err: %v", err)
 	}
-	req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	httpResp, err := client.Do(req)
 	if err != nil {
@@ -51,7 +44,7 @@ func MakeSignUpClient() {
 	}
 	defer httpResp.Body.Close()
 
-	var resp Resp
+	var resp httpx.Resp
 	if err := json.NewDecoder(httpResp.Body).Decode(&resp); err != nil {
 		log.Printf("decoding res.Body err: %v", err)
 		return
