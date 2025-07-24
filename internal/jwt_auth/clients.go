@@ -9,18 +9,23 @@ import (
 	"github.com/at-syot/be_auth/pkg/httpx"
 )
 
-type SignedUpUser struct {
-	ID    any    `json:"id"`
-	Uname string `json:"username"`
-	Hash  string `json:"password"`
-}
+type (
+	SignedUpUser struct {
+		ID    any    `json:"id"`
+		Uname string `json:"username"`
+		Hash  string `json:"password"`
+	}
+)
 
-// stored signedUser
-var signedUpUser SignedUpUser
+// storage
+var (
+	signedUpUser  SignedUpUser
+	signedInToken string
+)
 
 // ############
 
-func MakeSignUpClient() {
+func MakeSignUpClient(done chan<- uint8) {
 	time.Sleep(time.Second)
 	client := http.Client{Timeout: time.Second}
 	url := serverURL + "/signup"
@@ -58,4 +63,37 @@ func MakeSignUpClient() {
 		Hash:  data["password"].(string),
 	}
 	log.Printf("client:save signed user - %+v", signedUpUser)
+	done <- 0
+}
+
+func MakeSigninClient(signupDone <-chan uint8, done chan<- uint8) {
+	<-signupDone
+
+	url := serverURL + "/signin"
+	req, err := http.NewRequest(http.MethodPost, url, nil)
+	if err != nil {
+		log.Printf("create req err: %v", err)
+	}
+
+	body := SignUpReqBody{Uname: "aiosdev", Password: "password"}
+	if err := httpx.ReqWithJSON(req, body); err != nil {
+		log.Fatalf("marshal body err: %v", err)
+	}
+
+	httpResp, err := (&http.Client{}).Do(req)
+	if err != nil {
+		log.Printf("do req err: %v", err)
+	}
+	defer httpResp.Body.Close()
+
+	resp := new(httpx.Resp)
+	if err := httpx.DecodeStreamedV(httpResp.Body, resp); err != nil {
+		log.Fatalf("decode body err: %v", err)
+	}
+
+	data, _ := resp.Data.(map[string]any)
+	signedInToken = data["token"].(string)
+	log.Printf("signedInToken %s", signedInToken)
+
+	done <- 0
 }

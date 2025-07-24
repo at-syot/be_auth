@@ -8,6 +8,12 @@ import (
 	"net/http"
 )
 
+// -- decoding
+
+func DecodeStreamedV(r io.Reader, to any) error {
+	return json.NewDecoder(r).Decode(to)
+}
+
 // --- request
 func ReqWithJSON(req *http.Request, o any) error {
 	req.Header.Add("Content-Type", "application/json")
@@ -53,6 +59,14 @@ func WriteFailResp(w http.ResponseWriter, status int) {
 
 func WriteInternalErrResp(w http.ResponseWriter) {
 	WriteFailResp(w, http.StatusInternalServerError)
+}
+
+func WriteNotfoundResp(w http.ResponseWriter) {
+	WriteFailResp(w, http.StatusNotFound)
+}
+
+func WriteUnauthResp(w http.ResponseWriter) {
+	WriteFailResp(w, http.StatusUnauthorized)
 }
 
 // --- success response

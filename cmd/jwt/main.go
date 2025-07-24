@@ -17,7 +17,15 @@ func main() {
 
 	s := jwt_auth.NewServer()
 	go s.Listen()
-	go jwt_auth.MakeSignUpClient()
+
+	signupDone := make(chan uint8)
+	signinDone := make(chan uint8)
+	defer close(signupDone)
+	defer close(signinDone)
+
+	go jwt_auth.MakeSignUpClient(signupDone)
+	// after client is signup -> do signin
+	go jwt_auth.MakeSigninClient(signupDone, signinDone)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)

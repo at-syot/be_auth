@@ -2,6 +2,8 @@ package cipher
 
 import (
 	"errors"
+	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -22,12 +24,19 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 }
 
+// TODO: load from ENV
 const jwtSecret = "secret"
 
 func JWTSign() (signedStr string, err error) {
 	// SigningMethod: use HMAC for single entity like -one server to one client-
 	// use ECDSA when we have other microservices to communicate with.
-	claims := JWTClaims{jwt.RegisteredClaims{}}
+	jwtClaim := jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+		NotBefore: jwt.NewNumericDate(time.Now()),
+		Issuer:    "system",
+	}
+	claims := JWTClaims{jwtClaim}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	signedStr, err = token.SignedString([]byte(jwtSecret))
 	return
